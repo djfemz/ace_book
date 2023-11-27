@@ -1,14 +1,11 @@
 package africa.semicolon.acebook.services;
 
 import africa.semicolon.acebook.dtos.request.*;
-import africa.semicolon.acebook.dtos.response.AddFriendResponse;
-import africa.semicolon.acebook.dtos.response.RegisterResponse;
-import africa.semicolon.acebook.dtos.response.UpdateUserResponse;
-import africa.semicolon.acebook.dtos.response.UserResponse;
+import africa.semicolon.acebook.dtos.response.*;
 import africa.semicolon.acebook.exceptions.AccountNotFoundException;
 import africa.semicolon.acebook.models.AccountDetails;
-import africa.semicolon.acebook.models.Basic;
-import africa.semicolon.acebook.repositories.BasicRepository;
+import africa.semicolon.acebook.models.Account;
+import africa.semicolon.acebook.repositories.AccountRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -22,32 +19,34 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import static africa.semicolon.acebook.models.Tier.BASIC;
 import static africa.semicolon.acebook.utils.AppUtils.createPageRequest;
 import static java.util.Arrays.stream;
 
 @Service
 @AllArgsConstructor
 @Slf4j
-public class AceBookBasicService implements BasicService{
-    private final BasicRepository basicRepository;
+public class AceBookAccountService implements AccountService {
+    private final AccountRepository accountRepository;
     private final ModelMapper modelMapper;
     private final MailService mailService;
+    private final PaymentService paymentService;
 
     @Override
     public RegisterResponse register(UserRegisterRequest registerRequest) {
         AccountDetails accountDetails = modelMapper.map(registerRequest, AccountDetails.class);
-        Basic basicAccount = new Basic();
-        basicAccount.setAccountDetails(accountDetails);
-        Basic savedAccount = basicRepository.save(basicAccount);
+        Account account = new Account();
+        account.setAccountDetails(accountDetails);
+        account.setTier(BASIC);
+        Account savedAccount = accountRepository.save(account);
         String email = savedAccount.getAccountDetails().getEmail();
         mailService.sendMail(buildMailRequest(email));
         RegisterResponse response = new RegisterResponse();
@@ -57,7 +56,7 @@ public class AceBookBasicService implements BasicService{
 
     @Override
     public UserResponse getUserBy(Long id) throws AccountNotFoundException{
-        Basic foundAccount = basicRepository.findById(id)
+        Account foundAccount = accountRepository.findById(id)
                 .orElseThrow(()->new AccountNotFoundException(
                         String.format("account with id %d not found", id)
                 ));
@@ -67,8 +66,8 @@ public class AceBookBasicService implements BasicService{
     @Override
     public List<UserResponse> getAllBasicAccounts(int page, int size) {
         Pageable pageable = createPageRequest(page, size);
-        Page<Basic> foundAccounts = basicRepository.findAll(pageable);
-        List<Basic> accounts = foundAccounts.getContent();
+        Page<Account> foundAccounts = accountRepository.findAll(pageable);
+        List<Account> accounts = foundAccounts.getContent();
         return accounts.stream()
                        .map(account->buildUserResponse(account))
                        .toList();
@@ -82,30 +81,52 @@ public class AceBookBasicService implements BasicService{
 
         JsonPatch updatePatch = new JsonPatch(operations);
 
-        Basic foundAccount = basicRepository.findById(accountId)
+        Account foundAccount = accountRepository.findById(accountId)
                                         .orElseThrow(()-> getAccountNotFoundException(accountId));
 
 
         JsonNode accountNode = mapper.convertValue(foundAccount, JsonNode.class);
         JsonNode updatedNode = applyPatch(updatePatch, accountNode);
 
-        var updatedAccount = mapper.convertValue(updatedNode, Basic.class);
-        basicRepository.save(updatedAccount);
+        var updatedAccount = mapper.convertValue(updatedNode, Account.class);
+        accountRepository.save(updatedAccount);
         return new UpdateUserResponse("profile update successful");
     }
 
     @Override
     public AddFriendResponse addFriend(AddFriendRequest request) throws AccountNotFoundException {
-        Basic sender = basicRepository.findById(request.getSender()).orElseThrow(
+        Account sender = accountRepository.findById(request.getSender()).orElseThrow(
                 ()->new AccountNotFoundException("")
         );
-        Basic recipient = basicRepository.findById(request.getRecipient()).orElseThrow(
+        Account recipient = accountRepository.findById(request.getRecipient()).orElseThrow(
                 ()->new AccountNotFoundException("")
         );
-
-
 
         return null;
+    }
+
+    @Override
+    public ApiResponse<?> subscribeToPremium(UpgradeAccountRequest request) throws AccountNotFoundException {
+        Account account = getAccount(request.getAccountId());
+        CreatePaymentResponse<?> paymentResponse = paymentService.pay(buildPaymentRequest(account));
+
+        ApiResponse<CreatePaymentResponse<?>> response = new ApiResponse<>();
+        response.setData(paymentResponse);
+        return response;
+    }
+
+    private CreatePaymentRequest buildPaymentRequest(Account account){
+        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        createPaymentRequest.setEmail(account.getAccountDetails().getEmail());
+        createPaymentRequest.setAmount(BigDecimal.valueOf(2000));
+        return createPaymentRequest;
+    }
+
+    private Account getAccount(Long id) throws AccountNotFoundException {
+        return accountRepository.findById(id)
+                .orElseThrow(()->new AccountNotFoundException(
+                        String.format("account with id %d not found", id)
+                ));
     }
 
     private static List<ReplaceOperation> buildJsonPatchOperations(UpdateAccountRequest request) {
@@ -151,7 +172,7 @@ public class AceBookBasicService implements BasicService{
         );
     }
 
-    private static UserResponse buildUserResponse(Basic account) {
+    private static UserResponse buildUserResponse(Account account) {
         UserResponse userResponse = new UserResponse();
         userResponse.setFirstname(account.getFirstname());
         userResponse.setLastname(account.getLastname());

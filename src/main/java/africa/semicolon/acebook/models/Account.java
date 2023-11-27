@@ -4,15 +4,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 
 @Entity
 @Getter
 @Setter
-public class Basic {
+public class Account {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
@@ -21,5 +20,7 @@ public class Basic {
     @Embedded
     private AccountDetails accountDetails;
     @ManyToOne
-    private Basic friends;
+    private Account friend;
+    @Enumerated(STRING)
+    private Tier tier;
 }

@@ -2,11 +2,9 @@ package africa.semicolon.acebook.services;
 
 import africa.semicolon.acebook.dtos.request.AddFriendRequest;
 import africa.semicolon.acebook.dtos.request.UpdateAccountRequest;
+import africa.semicolon.acebook.dtos.request.UpgradeAccountRequest;
 import africa.semicolon.acebook.dtos.request.UserRegisterRequest;
-import africa.semicolon.acebook.dtos.response.AddFriendResponse;
-import africa.semicolon.acebook.dtos.response.RegisterResponse;
-import africa.semicolon.acebook.dtos.response.UpdateUserResponse;
-import africa.semicolon.acebook.dtos.response.UserResponse;
+import africa.semicolon.acebook.dtos.response.*;
 import africa.semicolon.acebook.exceptions.AccountNotFoundException;
 import com.github.fge.jsonpatch.JsonPatchException;
 import lombok.extern.slf4j.Slf4j;
@@ -19,16 +17,18 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 
+import static africa.semicolon.acebook.utils.AppUtils.IMAGE_LOCATION;
+import static africa.semicolon.acebook.utils.TestUtils.getTestImage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Slf4j
 //@Sql(scripts = {"/db/data.sql"})
-public class BasicServiceTest {
+public class AccountServiceTest {
 
     @Autowired
-    private BasicService basicService;
+    private AccountService accountService;
 
     private UserRegisterRequest userRegisterRequest;
 
@@ -44,7 +44,7 @@ public class BasicServiceTest {
     public void testRegister(){
 
 
-        RegisterResponse response = basicService.register(userRegisterRequest);
+        RegisterResponse response = accountService.register(userRegisterRequest);
 
         assertNotNull(response);
         assertThat(response.getId()).isNotNull();
@@ -52,9 +52,9 @@ public class BasicServiceTest {
 
     @Test
     public void testGetById(){
-        var response = basicService.register(userRegisterRequest);
+        var response = accountService.register(userRegisterRequest);
         try {
-            UserResponse userResponse = basicService.getUserBy(response.getId());
+            UserResponse userResponse = accountService.getUserBy(response.getId());
 
             assertThat(userResponse).isNotNull();
             assertThat(userResponse.getEmail())
@@ -67,7 +67,7 @@ public class BasicServiceTest {
     @Test
     public void testGetUsers(){
         List<UserResponse> accounts =
-                basicService.getAllBasicAccounts(1, 3);
+                accountService.getAllBasicAccounts(1, 3);
         log.info("accounts-->{}", accounts);
         assertThat(accounts).hasSize(3);
     }
@@ -79,9 +79,9 @@ public class BasicServiceTest {
         request.setFirstname("John");
         request.setLastname("Akpan");
         UpdateUserResponse updateUserResponse =
-                basicService.updateAccount(107L, request);
+                accountService.updateAccount(107L, request);
         assertThat(updateUserResponse).isNotNull();
-        UserResponse updatedGuy = basicService.getUserBy(107L);
+        UserResponse updatedGuy = accountService.getUserBy(107L);
         assertThat(updatedGuy.getEmail())
                 .isEqualTo(request.getEmail());
         assertThat(updatedGuy.getLastname()).isEqualTo(request.getLastname());
@@ -95,9 +95,23 @@ public class BasicServiceTest {
         request.setRecipient(2L);
         request.setMessage("Hi, I'd like to be your friend. You do?, abi you no do? ");
 
-        AddFriendResponse response = basicService.addFriend(request);
+        AddFriendResponse response = accountService.addFriend(request);
 
         assertThat(response).isNotNull();
 
+    }
+
+
+    @Test
+    @Sql(scripts = {"/db/data.sql"})
+    public void testSubscribeForPremiumService() throws AccountNotFoundException {
+        UpgradeAccountRequest request = new UpgradeAccountRequest();
+        request.setAccountId(100L);
+        request.setFile(getTestImage(IMAGE_LOCATION));
+
+        ApiResponse<?> response = accountService.subscribeToPremium(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getData()).isNotNull();
     }
 }

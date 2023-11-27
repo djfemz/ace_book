@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class BasicControllerTest {
+public class AccountControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -32,5 +33,12 @@ public class BasicControllerTest {
                 .andExpect(status().is2xxSuccessful())
                 .andDo(print());
 
+    }
+
+    @Test
+    public void testGetUserById() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/account/basic/1")
+                ).andExpect(status().isOk())
+                .andDo(print());
     }
 }

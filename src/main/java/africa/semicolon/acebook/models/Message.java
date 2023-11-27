@@ -11,9 +11,9 @@ public class Message {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
     @OneToOne
-    private Basic sender;
+    private Account sender;
     @OneToOne
-    private Basic recipient;
+    private Account recipient;
 
     private String text;
 }
