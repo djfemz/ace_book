@@ -27,4 +27,11 @@ public class PaymentServiceTest {
         log.info("payment response---->{}", response);
         assertThat(response).isNotNull();
     }
+
+    @Test
+    void testVerifyPayment() {
+        String transactionReference = "tevijo3lnq";
+        String transactionStatus = paymentService.verifyPaymentFor(transactionReference);
+        assertThat(transactionStatus).containsIgnoringCase("Success");
+    }
 }

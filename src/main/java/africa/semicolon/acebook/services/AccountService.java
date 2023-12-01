@@ -1,9 +1,6 @@
 package africa.semicolon.acebook.services;
 
-import africa.semicolon.acebook.dtos.request.AddFriendRequest;
-import africa.semicolon.acebook.dtos.request.UpdateAccountRequest;
-import africa.semicolon.acebook.dtos.request.UpgradeAccountRequest;
-import africa.semicolon.acebook.dtos.request.UserRegisterRequest;
+import africa.semicolon.acebook.dtos.request.*;
 import africa.semicolon.acebook.dtos.response.*;
 import africa.semicolon.acebook.exceptions.AccountNotFoundException;
 import com.github.fge.jsonpatch.JsonPatchException;
@@ -24,6 +21,8 @@ public interface AccountService {
 
     AddFriendResponse addFriend(AddFriendRequest request) throws AccountNotFoundException;
 
-    ApiResponse<?> subscribeToPremium(UpgradeAccountRequest request) throws AccountNotFoundException;
+    ApiResponse<?> subscribeToPremium(PremiumSubscriptionRequest request) throws AccountNotFoundException;
+
+    ApiResponse<String> upgradeAccountFor(UpgradeAccountRequest request) throws AccountNotFoundException;
 
 }

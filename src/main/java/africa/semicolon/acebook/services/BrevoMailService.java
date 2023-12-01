@@ -22,10 +22,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class BrevoMailService implements MailService{
 
     private final AppConfig appConfig;
+    private final RestTemplate restTemplate;
 
     @Override
     public SendMailResponse sendMail(SendMailRequest request) {
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = addRequestHeaders();
         RequestEntity<SendMailRequest> requestEntity = new RequestEntity<>(request, headers, POST, URI.create(appConfig.getMailServiceUrl()));
         ResponseEntity<SendMailResponse> mailResponse =restTemplate.postForEntity(appConfig.getMailServiceUrl(), requestEntity,SendMailResponse.class);

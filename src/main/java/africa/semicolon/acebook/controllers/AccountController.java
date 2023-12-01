@@ -10,15 +10,17 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
 @RestController
-@RequestMapping("/api/v1/account/basic")
+@RequestMapping("/api/v1/account")
 @AllArgsConstructor
-public class BasicController {
+public class AccountController {
     private final AccountService basicService;
 
     @PostMapping
     public ResponseEntity<RegisterResponse> register(@RequestBody UserRegisterRequest userRegisterRequest){
-        return ResponseEntity.ok(basicService.register(userRegisterRequest));
+        return ResponseEntity.status(CREATED).body(basicService.register(userRegisterRequest));
     }
 
     @GetMapping("/{id}")

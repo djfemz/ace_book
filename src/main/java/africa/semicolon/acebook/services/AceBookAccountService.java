@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static africa.semicolon.acebook.models.Tier.BASIC;
+import static africa.semicolon.acebook.models.Tier.PREMIUM;
 import static africa.semicolon.acebook.utils.AppUtils.createPageRequest;
 import static java.util.Arrays.stream;
 
@@ -106,7 +107,7 @@ public class AceBookAccountService implements AccountService {
     }
 
     @Override
-    public ApiResponse<?> subscribeToPremium(UpgradeAccountRequest request) throws AccountNotFoundException {
+    public ApiResponse<?> subscribeToPremium(PremiumSubscriptionRequest request) throws AccountNotFoundException {
         Account account = getAccount(request.getAccountId());
         CreatePaymentResponse<?> paymentResponse = paymentService.pay(buildPaymentRequest(account));
 
@@ -114,6 +115,26 @@ public class AceBookAccountService implements AccountService {
         response.setData(paymentResponse);
         return response;
     }
+
+    @Override
+    public ApiResponse<String> upgradeAccountFor(UpgradeAccountRequest request) throws AccountNotFoundException {
+        String paymentStatus = paymentService.verifyPaymentFor(request.getTransactionReference());
+        ApiResponse<String>  response = new ApiResponse<>();
+        if (paymentStatus.contains("successful")) {
+            String upgradeResponse = upgradeAccount(request.getAccountId());
+            response.setData(upgradeResponse);
+            return response;
+        }
+        response.setData("Failed To Upgrade account :(");
+        return response;
+    }
+
+    private String upgradeAccount(Long accountId) throws AccountNotFoundException {
+        Account account = getAccount(accountId);
+        account.setTier(PREMIUM);
+        return "Account Upgrade Successful";
+    }
+
 
     private CreatePaymentRequest buildPaymentRequest(Account account){
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();

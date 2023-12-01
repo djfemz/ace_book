@@ -1,9 +1,6 @@
 package africa.semicolon.acebook.services;
 
-import africa.semicolon.acebook.dtos.request.AddFriendRequest;
-import africa.semicolon.acebook.dtos.request.UpdateAccountRequest;
-import africa.semicolon.acebook.dtos.request.UpgradeAccountRequest;
-import africa.semicolon.acebook.dtos.request.UserRegisterRequest;
+import africa.semicolon.acebook.dtos.request.*;
 import africa.semicolon.acebook.dtos.response.*;
 import africa.semicolon.acebook.exceptions.AccountNotFoundException;
 import com.github.fge.jsonpatch.JsonPatchException;
@@ -105,13 +102,27 @@ public class AccountServiceTest {
     @Test
     @Sql(scripts = {"/db/data.sql"})
     public void testSubscribeForPremiumService() throws AccountNotFoundException {
-        UpgradeAccountRequest request = new UpgradeAccountRequest();
+        PremiumSubscriptionRequest request = new PremiumSubscriptionRequest();
         request.setAccountId(100L);
         request.setFile(getTestImage(IMAGE_LOCATION));
 
         ApiResponse<?> response = accountService.subscribeToPremium(request);
-
+        log.info("response---->{}", response);
         assertThat(response).isNotNull();
         assertThat(response.getData()).isNotNull();
+    }
+
+
+    @Test
+    @Sql(scripts = {"/db/data.sql"})
+    public void testUpgradeAccount() throws AccountNotFoundException {
+        UpgradeAccountRequest request = new UpgradeAccountRequest();
+        request.setAccountId(100L);
+        request.setTransactionReference("tevijo3lnq");
+
+        ApiResponse<String> response = accountService.upgradeAccountFor(request);
+        assertThat(response).isNotNull();
+        assertThat(response.getData()).containsIgnoringCase("Successful");
+
     }
 }

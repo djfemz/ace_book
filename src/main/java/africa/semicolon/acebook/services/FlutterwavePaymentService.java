@@ -33,4 +33,9 @@ public class FlutterwavePaymentService implements PaymentService{
                 restTemplate.postForEntity(uri, data, CreatePaymentResponse.class);
         return response.getBody();
     }
+
+    @Override
+    public String verifyPaymentFor(String transactionReference) {
+        return null;
+    }
 }

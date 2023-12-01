@@ -12,4 +12,6 @@ public class PaymentConfig {
     private String paystackApiKey;
     @Value("${paystack.api.url}")
     private String paystackUrl;
+    @Value("${paystack.verification.url}")
+    private String paystackVerificationUrl;
 }

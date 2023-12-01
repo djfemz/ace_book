@@ -4,6 +4,7 @@ import africa.semicolon.acebook.config.AppConfig;
 import africa.semicolon.acebook.config.PaymentConfig;
 import africa.semicolon.acebook.dtos.request.CreatePaymentRequest;
 import africa.semicolon.acebook.dtos.response.CreatePaymentResponse;
+import africa.semicolon.acebook.dtos.response.PaystackTransactionVerificationResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
@@ -12,8 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.util.Objects;
 
+import static africa.semicolon.acebook.utils.AppUtils.BEARER;
+import static java.net.URI.create;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -23,19 +28,30 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public class PaystackPaymentService implements PaymentService {
 
     private final PaymentConfig paymentConfig;
+    private final RestTemplate restTemplate;
+
     @Override
     public CreatePaymentResponse<?> pay(CreatePaymentRequest paymentRequest) {
         String apiKey = paymentConfig.getPaystackApiKey();
-        RestTemplate restTemplate = new RestTemplate();
-        URI uri = URI.create(paymentConfig.getPaystackUrl());
+        URI uri = create(paymentConfig.getPaystackUrl());
         RequestEntity<CreatePaymentRequest> data = buildPaymentRequest(paymentRequest, apiKey, uri);
         var response = restTemplate.postForEntity(uri, data, CreatePaymentResponse.class);
         return response.getBody();
     }
 
+    @Override
+    public String verifyPaymentFor(String transactionReference) {
+        String url =paymentConfig.getPaystackVerificationUrl()+transactionReference;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set(AUTHORIZATION, BEARER.concat(paymentConfig.getPaystackApiKey()));
+        RequestEntity<?> request = new RequestEntity<>(httpHeaders, GET, null);
+        var response = restTemplate.exchange(url, GET, request ,PaystackTransactionVerificationResponse.class);
+        return Objects.requireNonNull(response.getBody()).getMessage();
+    }
+
     private static RequestEntity<CreatePaymentRequest> buildPaymentRequest(CreatePaymentRequest paymentRequest, String apiKey, URI uri) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set(AUTHORIZATION, "Bearer ".concat(apiKey));
+        headers.set(AUTHORIZATION, BEARER.concat(apiKey));
         headers.setContentType(APPLICATION_JSON);
         RequestEntity<CreatePaymentRequest> data =
                 new RequestEntity<>(paymentRequest, headers, POST, uri);

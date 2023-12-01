@@ -5,4 +5,7 @@ import africa.semicolon.acebook.dtos.response.CreatePaymentResponse;
 
 public interface PaymentService {
     CreatePaymentResponse<?> pay(CreatePaymentRequest paymentRequest);
+
+    String verifyPaymentFor(String transactionReference);
+
 }

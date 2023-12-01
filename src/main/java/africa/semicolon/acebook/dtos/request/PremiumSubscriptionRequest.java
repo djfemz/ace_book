@@ -1,14 +1,12 @@
 package africa.semicolon.acebook.dtos.request;
 
-
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
-@NoArgsConstructor
-public class UpgradeAccountRequest {
-    private String transactionReference;
+public class PremiumSubscriptionRequest {
     private Long accountId;
+    private MultipartFile file;
 }
