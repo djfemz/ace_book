@@ -10,6 +10,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
+import java.util.stream.IntStream;
+
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
@@ -27,4 +30,6 @@ public class AccountController {
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) throws AccountNotFoundException {
         return ResponseEntity.ok(basicService.getUserBy(id));
     }
+
+
 }

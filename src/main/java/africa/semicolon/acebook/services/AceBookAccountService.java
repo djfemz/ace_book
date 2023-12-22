@@ -6,6 +6,7 @@ import africa.semicolon.acebook.exceptions.AccountNotFoundException;
 import africa.semicolon.acebook.models.AccountDetails;
 import africa.semicolon.acebook.models.Account;
 import africa.semicolon.acebook.repositories.AccountRepository;
+import africa.semicolon.acebook.security.SecureUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -20,12 +21,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static africa.semicolon.acebook.models.Tier.BASIC;
 import static africa.semicolon.acebook.models.Tier.PREMIUM;
@@ -35,15 +41,17 @@ import static java.util.Arrays.stream;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class AceBookAccountService implements AccountService {
+public class AceBookAccountService implements AccountService, UserDetailsService {
     private final AccountRepository accountRepository;
     private final ModelMapper modelMapper;
     private final MailService mailService;
     private final PaymentService paymentService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public RegisterResponse register(UserRegisterRequest registerRequest) {
         AccountDetails accountDetails = modelMapper.map(registerRequest, AccountDetails.class);
+        accountDetails.setPassword(passwordEncoder.encode(accountDetails.getPassword()));
         Account account = new Account();
         account.setAccountDetails(accountDetails);
         account.setTier(BASIC);
@@ -127,6 +135,13 @@ public class AceBookAccountService implements AccountService {
         }
         response.setData("Failed To Upgrade account :(");
         return response;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<Account> foundAccount = accountRepository.findAccountByEmail(username);
+        Account account = foundAccount.orElseThrow();
+        return new SecureUser(account);
     }
 
     private String upgradeAccount(Long accountId) throws AccountNotFoundException {
@@ -213,4 +228,7 @@ public class AceBookAccountService implements AccountService {
         mailRequest.setRecipients(recipients);
         return mailRequest;
     }
+
+
+
 }

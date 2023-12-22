@@ -30,7 +30,7 @@ public class PaymentServiceTest {
 
     @Test
     void testVerifyPayment() {
-        String transactionReference = "tevijo3lnq";
+        String transactionReference = "7pmx5zhm8l";
         String transactionStatus = paymentService.verifyPaymentFor(transactionReference);
         assertThat(transactionStatus).containsIgnoringCase("Success");
     }

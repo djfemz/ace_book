@@ -1,6 +1,5 @@
 package africa.semicolon.acebook.services;
 
-import africa.semicolon.acebook.config.AppConfig;
 import africa.semicolon.acebook.config.PaymentConfig;
 import africa.semicolon.acebook.dtos.request.CreatePaymentRequest;
 import africa.semicolon.acebook.dtos.response.CreatePaymentResponse;
@@ -15,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.util.Objects;
 
-import static africa.semicolon.acebook.utils.AppUtils.BEARER;
+import static africa.semicolon.acebook.utils.AppUtils.JWT_PREFIX;
 import static java.net.URI.create;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.GET;
@@ -43,7 +42,7 @@ public class PaystackPaymentService implements PaymentService {
     public String verifyPaymentFor(String transactionReference) {
         String url =paymentConfig.getPaystackVerificationUrl()+transactionReference;
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set(AUTHORIZATION, BEARER.concat(paymentConfig.getPaystackApiKey()));
+        httpHeaders.set(AUTHORIZATION, JWT_PREFIX.concat(paymentConfig.getPaystackApiKey()));
         RequestEntity<?> request = new RequestEntity<>(httpHeaders, GET, null);
         var response = restTemplate.exchange(url, GET, request ,PaystackTransactionVerificationResponse.class);
         return Objects.requireNonNull(response.getBody()).getMessage();
@@ -51,7 +50,7 @@ public class PaystackPaymentService implements PaymentService {
 
     private static RequestEntity<CreatePaymentRequest> buildPaymentRequest(CreatePaymentRequest paymentRequest, String apiKey, URI uri) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set(AUTHORIZATION, BEARER.concat(apiKey));
+        headers.set(AUTHORIZATION, JWT_PREFIX.concat(apiKey));
         headers.setContentType(APPLICATION_JSON);
         RequestEntity<CreatePaymentRequest> data =
                 new RequestEntity<>(paymentRequest, headers, POST, uri);
