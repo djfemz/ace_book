@@ -2,6 +2,7 @@ package africa.semicolon.acebook.security;
 
 
 import africa.semicolon.acebook.security.filters.AceBookAuthenticationFilter;
+import africa.semicolon.acebook.security.filters.JwtAuthorizationFilter;
 import africa.semicolon.acebook.security.services.JwtService;
 import africa.semicolon.acebook.services.AccountService;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterAt(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthorizationFilter(jwtService), authenticationFilter.getClass())
                 .authorizeHttpRequests(c->c.requestMatchers(POST,"/api/v1/login", "/api/v1/account")
                         .permitAll()
                         .anyRequest().authenticated()).build();
